@@ -63,18 +63,24 @@ thead .letters th{height:22px;font-family:var(--mono);text-transform:none;letter
 thead .names th{top:22px}
 th.rn,td.rn{position:sticky;left:0;z-index:1;background:var(--head);text-align:center;font-family:var(--mono);font-size:11px;color:var(--muted);padding:0}
 thead th.rn{z-index:3}
-td.c-company,th.c-company{position:sticky;left:40px;z-index:1;border-right:2px solid var(--grid)}
+td.c-company,th.c-company{position:sticky;left:74px;z-index:1;border-right:2px solid var(--grid)}
 thead th.c-company{z-index:3}
 tbody tr:hover td{background:var(--sunk)}
 tbody tr:hover td.rn{background:var(--head)}
 td input,td select{font:inherit;color:var(--fg);background:transparent;border:0;width:100%;height:33px;padding:0 8px;border-radius:0;min-width:0}
 td input:focus,td select:focus{outline:2px solid var(--accent);outline-offset:-2px;background:var(--surface)}
-td input[type=number]{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+td input[type=number]{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;-moz-appearance:textfield;appearance:textfield}
+/* hide the up/down arrows on number cells so values line up with the range cells */
+td input[type=number]::-webkit-inner-spin-button,td input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;appearance:none;margin:0}
 td input[type=date]{font-family:var(--mono);font-size:12px}
 td.calc{font-family:var(--mono);text-align:right;padding:0 8px;color:var(--muted);background:var(--sunk)}
 td.c-company input{font-weight:600}
 .linkcell{display:flex;align-items:center}
-.linkcell a{flex:none;padding:0 8px;color:var(--accent);text-decoration:none;font-weight:600}
+.linkcell{height:100%;min-height:33px}
+.linkcell .linktext{flex:1;min-width:0;padding:0 8px;color:var(--accent);text-decoration:none;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.linkcell .linktext:hover{text-decoration:underline}
+.editlink{flex:none;font:inherit;font-size:12px;border:0;background:transparent;color:var(--muted);cursor:pointer;padding:0 8px;height:100%;min-height:30px;opacity:.55}
+.editlink:hover,.editlink:focus-visible{opacity:1;color:var(--fg)}
 select.stage{font-weight:600;font-size:12px}
 .s-Saved{color:var(--idle)} .s-Applied{color:var(--accent)} .s-Screen{color:var(--violet)} .s-Interview{color:var(--warn)} .s-Offer{color:var(--ok)} .s-Rejected{color:var(--bad)} .s-Ghosted{color:var(--idle)}
 td.st-Applied{background:var(--accent-soft)} td.st-Screen{background:var(--violet-soft)} td.st-Interview{background:var(--warn-soft)} td.st-Offer{background:var(--ok-soft)} td.st-Rejected{background:var(--bad-soft)} td.st-Saved,td.st-Ghosted{background:var(--idle-soft)}
@@ -83,6 +89,27 @@ td.soon{background:var(--warn-soft)}
 .del{font:inherit;border:0;background:transparent;color:var(--muted);width:100%;height:33px;cursor:pointer;font-size:12px}
 .del:hover{color:var(--bad)}
 .del.armed{background:var(--bad);color:var(--surface);font-weight:600}
+/* range cells (Base, OTE, Size) */
+td.num input{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+
+/* column resize handles */
+thead .names th{overflow:visible}
+.th-label{display:block;overflow:hidden;text-overflow:ellipsis}
+.rz{position:absolute;top:0;right:-4px;width:8px;height:100%;cursor:col-resize;z-index:5;touch-action:none}
+.rz::after{content:"";position:absolute;top:20%;bottom:20%;left:3px;width:2px;border-radius:2px;background:transparent}
+.rz:hover::after,.rz.active::after{background:var(--accent)}
+
+/* row height */
+.tb-label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.sheet[data-density="compact"] tbody td{height:26px}
+.sheet[data-density="compact"] td input,.sheet[data-density="compact"] td select,.sheet[data-density="compact"] .del{height:25px;font-size:12px}
+.sheet[data-density="tall"] tbody td{height:auto;vertical-align:top}
+.sheet[data-density="tall"] td input,.sheet[data-density="tall"] td select,.sheet[data-density="tall"] .del{height:40px}
+.sheet[data-density="tall"] td.calc{padding-top:11px}
+td textarea{font:inherit;color:var(--fg);background:transparent;border:0;width:100%;min-height:58px;padding:9px 8px;border-radius:0;resize:vertical;display:block;line-height:1.35;field-sizing:content}
+td textarea:focus{outline:2px solid var(--accent);outline-offset:-2px;background:var(--surface)}
+td.c-company textarea{font-weight:600}
+
 .addrow td{height:36px;background:var(--sunk)}
 .addrow button{font:inherit;font-size:13px;border:0;background:transparent;color:var(--accent);font-weight:600;cursor:pointer;height:35px;padding:0 10px}
 .foot{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}
@@ -90,3 +117,12 @@ td.soon{background:var(--warn-soft)}
 .chip-due{background:var(--bad-soft)} .chip-soon{background:var(--warn-soft)}
 .empty{padding:28px 16px;text-align:center;color:var(--muted)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:8px;z-index:30;font-weight:500}
+
+/* row selection */
+th.sel,td.sel{position:sticky;left:40px;z-index:1;background:var(--head);text-align:center;padding:0;cursor:default}
+thead th.sel{z-index:3}
+th.sel input,td.sel input{width:16px;height:16px;margin:0;cursor:pointer;accent-color:var(--accent);vertical-align:middle}
+tbody tr.picked td{background:var(--accent-soft)}
+tbody tr.picked td.rn,tbody tr.picked td.sel{background:var(--head)}
+.sheet[data-density="tall"] td.sel{padding-top:12px}
+.btn.danger{background:var(--bad);border-color:var(--bad);color:#fff}

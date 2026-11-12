@@ -53,6 +53,16 @@
     <div class="toolbar">
       <input id="q" type="search" placeholder="Search any cell" aria-label="Search">
       <select id="stageFilter" aria-label="Filter by stage"><option value="All">All stages</option></select>
+      <label class="tb-label">Rows
+        <select id="density" aria-label="Row height">
+          <option value="compact">Compact</option>
+          <option value="normal">Normal</option>
+          <option value="tall">Tall (wrap text)</option>
+        </select>
+      </label>
+      <button class="btn danger" id="delSel" type="button" hidden>Delete selected (0)</button>
+      <button class="btn ghost" id="clearSel" type="button" hidden>Clear selection</button>
+      <button class="btn" id="resetWidths" type="button" title="Put every column back to its default width">Reset widths</button>
     </div>
 
     <div class="sheet" id="sheet">
@@ -63,7 +73,7 @@
       </table>
     </div>
     <div class="foot">
-      <span>Type straight into any cell. Changes save when you leave the cell. Click a column name to sort.</span>
+      <span>Type straight into any cell. Changes save when you leave the cell. Click a column name to sort. Drag a column's right edge to resize it. Base, OTE and Size take ranges like 80k-95k.</span>
       <span><span class="chip chip-due"></span>Follow-up due</span>
       <span><span class="chip chip-soon"></span>Due in 2 days</span>
       <span id="whoami"></span>
