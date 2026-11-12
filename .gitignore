@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.vercel/
+
+# Secrets / local settings — never commit
+.env
+.env.*
+!.env.example
+
+*.log
+.DS_Store
+Thumbs.db

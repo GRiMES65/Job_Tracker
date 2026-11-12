@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Tech Sales Pipeline</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+</head>
+<body>
+  <!-- Shown while we check whether you're signed in -->
+  <div id="boot" class="boot">Loading…</div>
+
+  <!-- Sign-in screen -->
+  <main id="loginView" class="login" hidden>
+    <form id="loginForm" class="card" autocomplete="on">
+      <h1>Tech Sales Pipeline</h1>
+      <p class="sub">Private tracker. Sign in to continue.</p>
+      <label>Email
+        <input id="email" type="email" autocomplete="username" required>
+      </label>
+      <label>Password
+        <input id="password" type="password" autocomplete="current-password" required>
+      </label>
+      <button class="btn primary" id="loginBtn" type="submit">Sign in</button>
+      <p class="err" id="loginErr" role="alert" hidden></p>
+    </form>
+  </main>
+
+  <!-- The tracker -->
+  <div id="appView" class="wrap" hidden>
+    <header>
+      <div>
+        <h1>Tech Sales Pipeline</h1>
+        <p class="sub">SDR, BDR, inside sales and entry AE applications. Target: an offer by late January 2027.</p>
+      </div>
+      <div class="actions">
+        <button class="btn" id="importBtn" type="button" title="Import rows from a CSV exported by the old tracker">Import CSV</button>
+        <input id="importFile" type="file" accept=".csv,text/csv" hidden>
+        <button class="btn" id="exportBtn" type="button">Export CSV</button>
+        <button class="btn primary" id="addBtn" type="button">+ New row</button>
+        <button class="btn ghost" id="logoutBtn" type="button">Sign out</button>
+      </div>
+    </header>
+
+    <div class="strip" aria-label="Summary">
+      <div class="q"><span><b id="wkNum">0</b> / 20 applied this week</span><div class="bar"><i id="wkBar"></i></div></div>
+      <span><b id="activeNum">0</b> in play · <b id="dueNum">0</b> follow-ups due · <b id="rateNum">—</b> response rate</span>
+    </div>
+
+    <div class="toolbar">
+      <input id="q" type="search" placeholder="Search any cell" aria-label="Search">
+      <select id="stageFilter" aria-label="Filter by stage"><option value="All">All stages</option></select>
+    </div>
+
+    <div class="sheet" id="sheet">
+      <table id="tbl">
+        <colgroup id="cols"></colgroup>
+        <thead><tr class="letters" id="letters"></tr><tr class="names" id="names"></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="foot">
+      <span>Type straight into any cell. Changes save when you leave the cell. Click a column name to sort.</span>
+      <span><span class="chip chip-due"></span>Follow-up due</span>
+      <span><span class="chip chip-soon"></span>Due in 2 days</span>
+      <span id="whoami"></span>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
