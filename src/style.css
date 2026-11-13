@@ -30,7 +30,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:14px
 .card .btn{min-height:42px;margin-top:4px}
 .err{margin:0;color:var(--bad);font-size:13px}
 
-.wrap{max-width:1600px;margin:0 auto;padding-block:18px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+.wrap{margin:0 auto;padding-block:18px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
 header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
 h1{font-family:var(--display);font-weight:700;font-size:clamp(22px,4vw,30px);letter-spacing:-.01em;margin:0}
 .sub{color:var(--muted);margin:2px 0 0}
@@ -55,7 +55,7 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(22px,4vw,30px);let
 
 /* sheet */
 .sheet{background:var(--surface);border:1px solid var(--grid);border-radius:6px;overflow:auto;max-height:72vh}
-table{border-collapse:separate;border-spacing:0;table-layout:fixed;font-size:13px}
+table{min-width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;font-size:13px}
 th,td{border-right:1px solid var(--grid);border-bottom:1px solid var(--grid);padding:0;height:34px;background:var(--surface)}
 thead th{position:sticky;top:0;z-index:2;background:var(--head);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:0 8px;white-space:nowrap;cursor:pointer;user-select:none}
 thead th:hover{color:var(--fg)}

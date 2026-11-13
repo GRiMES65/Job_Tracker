@@ -38,14 +38,14 @@ const COLS = [
   ["funding", "Funding", 125, "select", ["Seed", "Series A", "Series B", "Series C+", "Public", "Private"]],
   ["mode", "Work mode", 105, "select", ["Remote", "Hybrid", "On-site"]],
   ["location", "Location", 140, "text"],
+  ["fit", "Priority", 85, "select", ["1", "2", "3"]],
   ["link", "Posting link", 190, "link"],
-  ["reviews", "Reviews link / notes", 190, "text"],
+  ["source", "Found via", 130, "select", ["LinkedIn", "Company site", "Referral", "Indeed", "Wellfound", "Recruiter", "Other"]],
+  ["resume", "Resume ver.", 105, "text"],
   ["applied", "Applied", 130, "date"],
   ["follow_up", "Follow up", 130, "date"],
-  ["source", "Found via", 130, "select", ["LinkedIn", "Company site", "Referral", "Indeed", "Wellfound", "Recruiter", "Other"]],
+  ["reviews", "Reviews link / notes", 190, "text"],
   ["contact", "Contact", 170, "text"],
-  ["resume", "Resume ver.", 105, "text"],
-  ["fit", "Priority", 85, "select", ["1", "2", "3"]],
   ["notes", "Notes", 260, "text"],
 ];
 const COL = Object.fromEntries(COLS.map((c) => [c[0], c]));
@@ -54,11 +54,12 @@ const SORT_NUMERIC = new Set(["rating", "founded", "fit"]);
 const DATES = new Set(["applied", "follow_up"]);
 const IN_PLAY = ["Applied", "Screen", "Interview"];
 const DENSITIES = ["compact", "normal", "tall"];
+const SELECT_COLUMNS = ["id", "created_at", "updated_at", ...COLS.flatMap((c) => c[3] === "calc" ? [] : c[3] === "range" ? [c[0] + "_min", c[0] + "_max"] : [c[0]])].join(",");
 
 let rows = [], sortKey = "created_at", sortDir = "asc", query = "", stageFilter = "All";
 const selected = new Set();
 let editingLink = null; // row id whose posting link is being edited
-let schemaOutdated = false, pendingRender = false, focusNew = null, signedInAs = null, loading = false, resizing = false;
+let pendingRender = false, focusNew = null, signedInAs = null, loading = false, resizing = false;
 
 /* ---------- View preferences (this browser only) ---------- */
 function loadPref(key, fallback) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; } }
@@ -142,15 +143,16 @@ async function loadRows() {
   if (loading) return;
   loading = true;
   if (!rows.length) $("tbody").innerHTML = '<tr><td class="empty" colspan="' + (COLS.length + 3) + '">Loading your sheet…</td></tr>';
-  const { data, error } = await sb.from(TABLE).select("*").order("created_at", { ascending: true });
+  const { data, error } = await sb.from(TABLE).select(SELECT_COLUMNS).order("created_at", { ascending: true });
   loading = false;
   if (error) {
-    const hint = /column|schema/i.test(error.message || "") ? " (Has supabase/migrations/002_ranges.sql been run?)" : "";
-    if (!rows.length) $("tbody").innerHTML = '<tr><td class="empty" colspan="' + (COLS.length + 3) + '">Couldn\'t load your sheet. Reload to try again.' + esc(hint) + "</td></tr>";
+    const missing = /column/i.test(error.message || "");
+    $("tbody").innerHTML = '<tr><td class="empty" colspan="' + (COLS.length + 3) + '">' +
+      (missing ? "The database is missing columns this version needs. Run <b>supabase/migrations/002_ranges.sql</b> in Supabase (SQL Editor), then reload."
+               : "Couldn't load your sheet. Reload to try again.") +
+      '<br><small>Supabase said: ' + esc(error.message || "unknown error") + "</small></td></tr>";
     return;
   }
-  schemaOutdated = data.length > 0 && !("base_min" in data[0]);
-  if (schemaOutdated) toast("Database needs updating: run supabase/migrations/002_ranges.sql in Supabase, then reload.");
   const ids = new Set(data.map((r) => r.id));
   [...selected].forEach((id) => { if (!ids.has(id)) selected.delete(id); });
   rows = data.map((r) => ({ ...r, status: STAGES.includes(r.status) ? r.status : "Saved", fit: r.fit == null ? "" : String(r.fit) }));
@@ -160,10 +162,7 @@ async function loadRows() {
 async function save(id, patch) {
   const { error } = await sb.from(TABLE).update(patch).eq("id", id);
   if (error) {
-    const missingColumn = /column|schema cache/i.test(error.message || "");
-    toast(missingColumn || schemaOutdated
-      ? "Couldn't save: the database needs updating. Run supabase/migrations/002_ranges.sql in Supabase, then reload."
-      : "Couldn't save that cell. Try again.");
+    toast("Couldn't save that cell. Supabase said: " + (error.message || "unknown error"));
     return false;
   }
   return true;
