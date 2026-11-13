@@ -22,7 +22,7 @@ A private, spreadsheet-style job application tracker. Built with vanilla JavaScr
 ### 1. Supabase
 
 1. Create a new project at supabase.com.
-2. Go to **SQL Editor → New query**, paste in the contents of `supabase/schema.sql`, and click **Run**. If you ran an older copy of `schema.sql` before Base, OTE and Size became ranges, also run `supabase/migrations/002_ranges.sql`.
+2. Go to **SQL Editor → New query**, paste in the contents of `supabase/schema.sql`, and click **Run**. If you ran an older copy of `schema.sql` before Base, OTE and Size became ranges, also run `supabase/migrations/002_ranges.sql`. If you ran it before rows could be dragged into order, also run `supabase/migrations/003_row_order.sql`.
 3. Go to **Authentication → Sign In / Providers**, turn **off** "Allow new users to sign up", and leave Email enabled.
 4. Go to **Authentication → Users → Add user → Create new user**. Enter your email and a strong password, and tick **Auto Confirm User**.
 5. Go to **Project Settings → API Keys** and copy the **publishable** key. The Project URL is under **Project Settings → Data API**, or on the project's home page.

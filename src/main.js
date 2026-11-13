@@ -53,9 +53,9 @@ const SORT_NUMERIC = new Set(["rating", "founded", "fit"]);
 const DATES = new Set(["applied", "follow_up"]);
 const IN_PLAY = ["Applied", "Screen", "Interview"];
 const DENSITIES = ["compact", "normal", "tall"];
-const SELECT_COLUMNS = ["id", "created_at", "updated_at", ...COLS.flatMap((c) => c[3] === "calc" ? [] : c[3] === "range" ? [c[0] + "_min", c[0] + "_max"] : [c[0]])].join(",");
+const SELECT_COLUMNS = ["id", "created_at", "updated_at", "sort_order", ...COLS.flatMap((c) => c[3] === "calc" ? [] : c[3] === "range" ? [c[0] + "_min", c[0] + "_max"] : [c[0]])].join(",");
 
-let rows = [], sortKey = "created_at", sortDir = "asc", query = "", stageFilter = "All";
+let rows = [], sortKey = "sort_order", sortDir = "asc", query = "", stageFilter = "All";
 const selected = new Set();
 let editingLink = null; // row id whose posting link is being edited
 let pendingRender = false, focusNew = null, signedInAs = null, loading = false, resizing = false;
@@ -142,12 +142,12 @@ async function loadRows() {
   if (loading) return;
   loading = true;
   if (!rows.length) $("tbody").innerHTML = '<tr><td class="empty" colspan="' + (COLS.length + 3) + '">Loading your sheet…</td></tr>';
-  const { data, error } = await sb.from(TABLE).select(SELECT_COLUMNS).order("created_at", { ascending: true });
+  const { data, error } = await sb.from(TABLE).select(SELECT_COLUMNS).order("sort_order", { ascending: true }).order("created_at", { ascending: true });
   loading = false;
   if (error) {
     const missing = /column/i.test(error.message || "");
     $("tbody").innerHTML = '<tr><td class="empty" colspan="' + (COLS.length + 3) + '">' +
-      (missing ? "The database is missing columns this version needs. Run <b>supabase/migrations/002_ranges.sql</b> in Supabase (SQL Editor), then reload."
+      (missing ? "The database is missing columns this version needs. Run the files in <b>supabase/migrations</b> you haven\'t run yet (e.g. 003_row_order.sql) in Supabase (SQL Editor), then reload."
                : "Couldn't load your sheet. Reload to try again.") +
       '<br><small>Supabase said: ' + esc(error.message || "unknown error") + "</small></td></tr>";
     return;
@@ -170,8 +170,8 @@ async function save(id, patch) {
 async function addRow() {
   if (stageFilter !== "All" && stageFilter !== "Saved") { stageFilter = "All"; $("stageFilter").value = "All"; }
   query = ""; $("q").value = "";
-  sortKey = "created_at"; sortDir = "asc";
-  const { data, error } = await sb.from(TABLE).insert({ company: "", role: "", status: "Saved", fit: "2" }).select().single();
+  sortKey = "sort_order"; sortDir = "asc";
+  const { data, error } = await sb.from(TABLE).insert({ company: "", role: "", status: "Saved", fit: "2", sort_order: maxOrder() + 1 }).select().single();
   if (error) { toast("Couldn't add a row. Try again."); return; }
   rows.push({ ...data, fit: String(data.fit ?? "") });
   focusNew = data.id;
@@ -229,7 +229,7 @@ $("names").addEventListener("dblclick", (e) => {
 
 /* ---------- Rendering ---------- */
 function renderHead() {
-  $("names").innerHTML = '<th class="rn" data-sort="created_at" title="Original order">#</th><th class="sel"><input type="checkbox" id="selAll" aria-label="Select all rows"></th>' + COLS.map((c) => {
+  $("names").innerHTML = '<th class="rn" data-sort="sort_order" title="Your custom order (drag rows to change it)">#</th><th class="sel"><input type="checkbox" id="selAll" aria-label="Select all rows"></th>' + COLS.map((c) => {
     const arrow = sortKey === c[0] ? (sortDir === "asc" ? " ↑" : " ↓") : "";
     return '<th class="' + (c[0] === "company" ? "c-company" : "") + '" data-sort="' + c[0] + '"><span class="th-label">' + esc(c[1]) + arrow +
       '</span><span class="rz" data-k="' + c[0] + '" title="Drag to resize · double-click to reset"></span></th>';
@@ -252,6 +252,7 @@ function visible() {
   let v = rows.filter((r) => stageFilter === "All" || r.status === stageFilter);
   if (query) { const q = query.toLowerCase(); v = v.filter((r) => COLS.some((c) => display(r, c).toLowerCase().includes(q))); }
   const val = (r) => {
+    if (sortKey === "sort_order") return r.sort_order == null ? null : +r.sort_order;
     if (sortKey === "_age") return +r.founded ? -+r.founded : null;
     if (sortKey === "status") return STAGES.indexOf(r.status);
     if (COL[sortKey] && COL[sortKey][3] === "range") {
@@ -309,7 +310,8 @@ function render() {
   pendingRender = false;
   stats(); renderHead();
   const v = visible();
-  let html = v.map((r, i) => '<tr' + (selected.has(r.id) ? ' class="picked"' : "") + '><td class="rn">' + (i + 1) + "</td>" +
+  let html = v.map((r, i) => '<tr data-row="' + esc(r.id) + '"' + (selected.has(r.id) ? ' class="picked"' : "") + '><td class="rn">' +
+    '<span class="grip" data-grip="' + esc(r.id) + '" title="Drag to move this row" aria-hidden="true">⠿</span><span class="rnum">' + (i + 1) + "</span></td>" +
     '<td class="sel"><input type="checkbox" data-sel="' + esc(r.id) + '"' + (selected.has(r.id) ? " checked" : "") + ' aria-label="Select row"></td>' + COLS.map((c) => cell(r, c)).join("") +
     '<td><button class="del" type="button" data-del="' + esc(r.id) + '" aria-label="Delete row">✕</button></td></tr>').join("");
   if (!v.length) html = '<tr><td class="empty" colspan="' + (COLS.length + 3) + '">' +
@@ -434,6 +436,82 @@ document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible" && signedInAs && !editing()) loadRows();
 });
 
+/* ---------- Drag rows to reorder ---------- */
+function maxOrder() { return rows.reduce((m, r) => (r.sort_order != null && +r.sort_order > m ? +r.sort_order : m), 0); }
+
+// Give every row a clean 1, 2, 3… order (only needed if the gaps between rows get tiny).
+async function renumber() {
+  const ordered = [...rows].sort((a, b) => (+a.sort_order || 0) - (+b.sort_order || 0) || String(a.created_at).localeCompare(String(b.created_at)));
+  const changes = [];
+  ordered.forEach((r, i) => { if (+r.sort_order !== i + 1) { r.sort_order = i + 1; changes.push(r); } });
+  const results = await Promise.all(changes.map((r) => sb.from(TABLE).update({ sort_order: r.sort_order }).eq("id", r.id)));
+  return results.every((x) => !x.error);
+}
+
+async function moveRow(id, targetId, after) {
+  const moving = rows.find((r) => r.id === id);
+  if (!moving || id === targetId) return;
+  const place = () => {
+    const list = visible().filter((r) => r.id !== id);
+    let idx = list.findIndex((r) => r.id === targetId);
+    if (idx < 0) return null;
+    if (after) idx++;
+    return { prev: list[idx - 1], next: list[idx] };
+  };
+  let p = place();
+  if (!p) return;
+  if (p.prev && p.next && Math.abs(+p.next.sort_order - +p.prev.sort_order) < 1e-6) {
+    if (!(await renumber())) { toast("Couldn't reorder. Try again."); return loadRows(); }
+    p = place();
+  }
+  const { prev, next } = p;
+  const pos = prev && next ? (+prev.sort_order + +next.sort_order) / 2 : prev ? +prev.sort_order + 1 : next ? +next.sort_order - 1 : 1;
+  const old = moving.sort_order;
+  moving.sort_order = pos;
+  render();
+  const ok = await save(id, { sort_order: pos });
+  if (!ok) { moving.sort_order = old; render(); }
+}
+
+$("tbody").addEventListener("pointerdown", (e) => {
+  const g = e.target.closest("[data-grip]");
+  if (!g || e.button !== 0) return;
+  e.preventDefault();
+  if (sortKey !== "sort_order" || sortDir !== "asc") {
+    sortKey = "sort_order"; sortDir = "asc"; render();
+    toast("Switched to your custom order (#). Now drag the row where you want it.");
+    return;
+  }
+  const tr = g.closest("tr"), sheet = $("sheet");
+  const drag = { id: g.dataset.grip, target: null, after: false, marked: null };
+  tr.classList.add("dragging");
+  document.body.classList.add("reordering");
+  g.setPointerCapture(e.pointerId);
+
+  const clearMark = () => { if (drag.marked) drag.marked.classList.remove("drop-before", "drop-after"); drag.marked = null; };
+  const move = (ev) => {
+    const box = sheet.getBoundingClientRect();
+    if (ev.clientY < box.top + 50) sheet.scrollTop -= 14; else if (ev.clientY > box.bottom - 30) sheet.scrollTop += 14;
+    const el = document.elementFromPoint(ev.clientX, ev.clientY);
+    const over = el && el.closest && el.closest("#tbody tr[data-row]");
+    clearMark();
+    if (!over || over === tr) { drag.target = null; return; }
+    const r = over.getBoundingClientRect();
+    drag.after = ev.clientY > r.top + r.height / 2;
+    drag.target = over.dataset.row;
+    over.classList.add(drag.after ? "drop-after" : "drop-before");
+    drag.marked = over;
+  };
+  const end = (ev) => {
+    g.removeEventListener("pointermove", move); g.removeEventListener("pointerup", end); g.removeEventListener("pointercancel", end);
+    clearMark();
+    tr.classList.remove("dragging");
+    document.body.classList.remove("reordering");
+    if (ev.type === "pointerup" && drag.target) moveRow(drag.id, drag.target, drag.after);
+  };
+  g.addEventListener("pointermove", move); g.addEventListener("pointerup", end); g.addEventListener("pointercancel", end);
+});
+
 /* ---------- Select & bulk delete ---------- */
 function syncSelection() {
   const v = visible(), n = selected.size;
@@ -521,6 +599,8 @@ $("importFile").addEventListener("change", async (e) => {
   if (!records.length) { toast("No usable rows in that file."); return; }
   if (!confirm("Import " + records.length + " row(s) into your tracker?")) return;
 
+  const start = maxOrder();
+  records.forEach((rec, i) => (rec.sort_order = start + i + 1));
   for (let i = 0; i < records.length; i += 500) {
     const { error } = await sb.from(TABLE).insert(records.slice(i, i + 500));
     if (error) { toast("Import stopped partway. Some rows may not have been added."); await loadRows(); return; }

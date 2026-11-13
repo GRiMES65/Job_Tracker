@@ -32,6 +32,7 @@ create table if not exists public.applications (
   resume      text,
   fit         text default '2',
   notes       text,
+  sort_order  double precision,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );

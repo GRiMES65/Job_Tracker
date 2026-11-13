@@ -126,3 +126,13 @@ tbody tr.picked td{background:var(--accent-soft)}
 tbody tr.picked td.rn,tbody tr.picked td.sel{background:var(--head)}
 .sheet[data-density="tall"] td.sel{padding-top:12px}
 .btn.danger{background:var(--bad);border-color:var(--bad);color:#fff}
+
+/* drag to reorder */
+td.rn .grip{display:none;cursor:grab;font-size:15px;line-height:1;color:var(--muted);padding:4px 6px;touch-action:none;user-select:none}
+tbody tr:hover td.rn .grip,tbody tr.dragging td.rn .grip{display:inline-block}
+tbody tr:hover td.rn .rnum,tbody tr.dragging td.rn .rnum{display:none}
+td.rn .grip:hover{color:var(--accent)}
+tbody tr.dragging td{opacity:.45}
+tbody tr.drop-before td{box-shadow:inset 0 3px 0 var(--accent)}
+tbody tr.drop-after td{box-shadow:inset 0 -3px 0 var(--accent)}
+body.reordering,body.reordering *{cursor:grabbing!important;user-select:none!important}
