@@ -41,7 +41,6 @@ const COLS = [
   ["fit", "Priority", 85, "select", ["1", "2", "3"]],
   ["link", "Posting link", 190, "link"],
   ["source", "Found via", 130, "select", ["LinkedIn", "Company site", "Referral", "Indeed", "Wellfound", "Recruiter", "Other"]],
-  ["resume", "Resume ver.", 105, "text"],
   ["applied", "Applied", 130, "date"],
   ["follow_up", "Follow up", 130, "date"],
   ["reviews", "Reviews link / notes", 190, "text"],
